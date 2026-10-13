@@ -74,7 +74,7 @@ async function changeRole(req, res, next)
   {
     const { rows } = await pool.query
     (
-      'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, username, role',
+      'UPDATE festivent_users SET role = $1 WHERE id = $2 RETURNING id, username, role',
       [clean.role, req.user.id]
     );
 
@@ -136,7 +136,7 @@ async function getEvents(req, res, next)
     // For the "n page out of n" thing
     const countResult = await pool.query
     (
-      `SELECT COUNT(*)::int AS count FROM events e JOIN users u ON u.id = e.organizer_id ${whereSql}`,
+      `SELECT COUNT(*)::int AS count FROM festivent_events e JOIN festivent_users u ON u.id = e.organizer_id ${whereSql}`,
       params
     );
     const total = countResult.rows[0].count;
@@ -147,8 +147,8 @@ async function getEvents(req, res, next)
     (
       `SELECT e.id, e.title, e.description, e.event_date, e.location, e.category,
               u.username AS organizer
-       FROM events e
-       JOIN users u ON u.id = e.organizer_id
+       FROM festivent_events e
+       JOIN festivent_users u ON u.id = e.organizer_id
        ${whereSql}
        ORDER BY e.${sortBy} ${order}
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -170,7 +170,7 @@ async function createEvent(req, res, next)
   {
     const { rows } = await pool.query
     (
-      `INSERT INTO events (title, description, event_date, location, category, organizer_id)
+      `INSERT INTO festivent_events (title, description, event_date, location, category, organizer_id)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [clean.title, clean.description || null, clean.event_date, clean.location || null, 
         clean.category || null, req.user.id]
@@ -193,7 +193,7 @@ async function updateEvent(req, res, next)
     const id = parseInt(req.params.id, 10);
     const { rows } = await pool.query
     (
-      `UPDATE events SET
+      `UPDATE festivent_events SET
          title = COALESCE($1, title),
          description = COALESCE($2, description),
          event_date = COALESCE($3, event_date),
@@ -225,7 +225,7 @@ async function deleteEvent(req, res, next)
     const id = parseInt(req.params.id, 10);
     const { rows } = await pool.query
     (
-      'DELETE FROM events WHERE id = $1 AND organizer_id = $2 RETURNING *',
+      'DELETE FROM festivent_events WHERE id = $1 AND organizer_id = $2 RETURNING *',
       [id, req.user.id]
     );
     
